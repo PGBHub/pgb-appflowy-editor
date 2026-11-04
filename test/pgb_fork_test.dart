@@ -23,6 +23,40 @@ void main() {
     expect(await picker.saveFile(fileName: 'x'), isNull);
   });
 
+  test('Node.revision changes with the node and every ancestor', () async {
+    final a = paragraphNode(text: 'a');
+    final b = bulletedListNode(text: 'b', children: [paragraphNode(text: 'c')]);
+    final editorState = EditorState(
+      document: Document.blank()..insert([0], [a, b]),
+    );
+    final root = editorState.document.root;
+    final ra = a.revision;
+    final rb = b.revision;
+    final rRoot = root.revision;
+    // Text inside the nested child: the child, b and the root change; a not.
+    final c = b.children.single;
+    final rc = c.revision;
+    await editorState.apply(editorState.transaction..insertText(c, 1, 'd'));
+    expect(c.revision, isNot(rc));
+    expect(b.revision, isNot(rb));
+    expect(root.revision, isNot(rRoot));
+    expect(a.revision, ra);
+    // Attributes, inserts and deletes of children count too.
+    var r = b.revision;
+    b.updateAttributes({'x': 1});
+    expect(b.revision, isNot(r));
+    r = b.revision;
+    b.insert(paragraphNode(text: 'e'));
+    expect(b.revision, isNot(r));
+    r = b.revision;
+    b.children.last.unlink();
+    expect(b.revision, isNot(r));
+    r = root.revision;
+    a.insertAfter(paragraphNode(text: 'f'));
+    expect(root.revision, isNot(r));
+    expect(a.revision, ra);
+  });
+
   testWidgets('renders and edits a document', (tester) async {
     final nodes = [
       paragraphNode(text: 'Hello'),

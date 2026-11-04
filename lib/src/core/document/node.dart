@@ -1,3 +1,5 @@
+// Modified by PGBHub (pgb_appflowy_editor fork): Node.revision (a subtree
+// change counter for incremental serialisers). MPL-2.0.
 import 'dart:collection';
 
 import 'package:appflowy_editor/appflowy_editor.dart';
@@ -109,13 +111,32 @@ final class Node extends ChangeNotifier with LinkedListEntry<Node> {
   final layerLink = LayerLink();
 
   void notify() {
+    _touch();
     notifyListeners();
+  }
+
+  // PGBHub: change tracking.
+  static int _clock = 0;
+  int _revision = 0;
+
+  /// Changes whenever this node or anything under it changes (attributes,
+  /// text, children added, removed or moved). A node's identity plus its
+  /// revision identify its content, so serialisers can cache per node and
+  /// redo only what an edit touched.
+  int get revision => _revision;
+
+  void _touch() {
+    final r = ++_clock;
+    for (Node? n = this; n != null; n = n.parent) {
+      n._revision = r;
+    }
   }
 
   /// Update the attributes of the node.
   ///
   void updateAttributes(Attributes attributes) {
     _attributes = composeAttributes(this.attributes, attributes) ?? {};
+    _touch();
 
     notifyListeners();
   }
@@ -157,6 +178,7 @@ final class Node extends ChangeNotifier with LinkedListEntry<Node> {
     entry.parent = this;
 
     _cacheChildren = null;
+    _touch();
 
     if (_children.isEmpty) {
       _children.add(entry);
@@ -183,6 +205,7 @@ final class Node extends ChangeNotifier with LinkedListEntry<Node> {
     super.insertAfter(entry);
 
     parent?._cacheChildren = null;
+    parent?._touch();
 
     // Notifies the new node.
     parent?.notifyListeners();
@@ -195,6 +218,7 @@ final class Node extends ChangeNotifier with LinkedListEntry<Node> {
     super.insertBefore(entry);
 
     parent?._cacheChildren = null;
+    parent?._touch();
 
     // Notifies the new node.
     parent?.notifyListeners();
@@ -210,6 +234,7 @@ final class Node extends ChangeNotifier with LinkedListEntry<Node> {
     super.unlink();
 
     parent?._cacheChildren = null;
+    parent?._touch();
 
     parent?.notifyListeners();
     parent = null;

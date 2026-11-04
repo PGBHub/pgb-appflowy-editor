@@ -37,14 +37,38 @@ cleanly; don't add pub.dev's appflowy_editor next to it.
 | `lib/src/editor/editor_component/service/ime/delta_input_service.dart` | `onFocusReceived` (new in Flutter's `TextInputClient`) |
 | `lib/src/flutter/scrollable_positioned_list/src/{scroll_view,scrollable_positioned_list,viewport,wrapping}.dart` | `deprecated_member_use` silenced (Flutter 3.41 `cacheExtent` deprecations); behaviour unchanged |
 | `lib/src/extensions/node_extensions.dart` | Lint fix (`unnecessary_this`) |
+| `lib/src/core/document/node.dart` | `Node.revision`: a counter that changes whenever the node or anything under it changes (attributes, text, children), so the app's binding re-serialises only what an edit touched (phase 1c, large documents) |
+| `test/pgb_fork_test.dart` | PGBHub's own tests (upstream's suite isn't carried), incl. `Node.revision` |
+| `tool/upstream_merge.sh` | PGBHub's own: the upstream merge below |
 
 Everything else is upstream's code as published.
 
-## Updating
+## Updating (pulling an upstream release)
 
-Download the newer upstream archive, re-apply the table above, bump the
-version (`x.y.z+pgb.1`) and this file, then run `flutter analyze` and
-`flutter test` here and the app's `test/features/docs_edit` tests.
+`tool/upstream_merge.sh <new-version> [<base-version>]` does a three-way
+merge per file: the pub.dev archive of the base release (6.2.0 now) is the
+common ancestor, this package is ours, the new release is theirs.
+
+- Files PGBHub never changed are replaced by upstream's.
+- Files PGBHub changed (the table above, each marked `Modified by PGBHub`)
+  are merged with `git merge-file`; conflicts are left with markers.
+- New upstream files are added; files upstream removed (and PGBHub never
+  changed) are deleted. `example/`, `test/` and `documentation/` stay out.
+
+Then, by hand:
+
+1. Resolve conflicts (`grep -rn '<<<<<<<' lib`), keeping each file's
+   `Modified by PGBHub` notice.
+2. Bump `pubspec.yaml` to `<new>+pgb.1`, set the base version in this file
+   (the first paragraph and the script's default) and update the table.
+3. `flutter pub get && flutter analyze && flutter test` here, then in
+   pgb-business-mobile `flutter test test/features/docs_edit` (the
+   conformance, fuzz and benchmark tests exercise the editor through the
+   binding) and a manual pass on a phone (IME, selection handles, tables).
+4. Read upstream's CHANGELOG for behaviour changes to the input service,
+   selection, transactions and `Node` (the binding depends on them).
+
+Nothing is committed by the script; review the diff like any change.
 
 ## Checks
 
