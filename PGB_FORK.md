@@ -33,7 +33,19 @@ The fork's source is public at <https://github.com/PGBHub/pgb-appflowy-editor>
 (Settings, View licenses) points there (`lib/core/open_source.dart` in
 pgb-business-mobile).
 
-Republish after every change to this package, before the app build that ships it:
+Publishing is automatic: `.github/workflows/publish-appflowy-fork.yml`
+republishes on every push to `main` that changes this folder (it can also be run
+by hand from the Actions tab). One-time setup:
+
+1. `ssh-keygen -t ed25519 -N "" -C appflowy-fork-publish -f ~/fork_key`
+2. In github.com/PGBHub/pgb-appflowy-editor, Settings, Deploy keys: add
+   `~/fork_key.pub` and tick "Allow write access".
+3. In github.com/PGBHub/pgb-mobile-core, Settings, Secrets and variables,
+   Actions: add the secret `APPFLOWY_FORK_DEPLOY_KEY` with the contents of
+   `~/fork_key`.
+4. Delete both key files.
+
+By hand, if ever needed:
 
 ```
 cd pgb-mobile-core
