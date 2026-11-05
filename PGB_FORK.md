@@ -26,6 +26,23 @@ Upstream's `example/`, `test/` and `documentation/` folders are not carried.
 The Dart package name stays `appflowy_editor` so upstream changes merge
 cleanly; don't add pub.dev's appflowy_editor next to it.
 
+## Published source
+
+The fork's source is public at <https://github.com/PGBHub/pgb-appflowy-editor>
+(branch `main`), as MPL-2.0 requires once the app ships. The app's licences page
+(Settings, View licenses) points there (`lib/core/open_source.dart` in
+pgb-business-mobile).
+
+Republish after every change to this package, before the app build that ships it:
+
+```
+cd pgb-mobile-core
+git subtree split --prefix=packages/pgb_appflowy_editor -b appflowy-fork-public
+git push git@github.com:PGBHub/pgb-appflowy-editor.git appflowy-fork-public:main
+```
+
+Only this folder and its history are published, never the rest of pgb-mobile-core.
+
 ## Changes from 6.2.0
 
 | File | Change |
